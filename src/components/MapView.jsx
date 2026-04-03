@@ -9,6 +9,7 @@ import {
   ZoomControl,
   useMap,
 } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import { formatPrice } from '../utils/format';
 
@@ -154,65 +155,73 @@ export default function MapView({
         </>
       )}
 
-      {fuelStations.map((s) => {
-        const isSelected = selectedStation?.id === s.id;
-        return (
-          <Marker
-            key={s.id}
-            position={[s.lat, s.lng]}
-            icon={isSelected ? fuelIconSelected : fuelIcon}
-            zIndexOffset={isSelected ? 1000 : 0}
-            eventHandlers={{ click: () => onSelectStation(s) }}
-          >
-            <Popup>
-              <strong className="text-sm">{s.brand || s.name}</strong>
-              <br />
-              <span className="text-xs text-gray-500">{s.street} {s.houseNumber}, {s.postCode} {s.place}</span>
-              {(s.e5 != null || s.e10 != null || s.diesel != null) && (
-                <div className="mt-1.5 grid grid-cols-3 gap-x-2 text-xs text-center">
-                  {s.e5 != null    && <div><div className="text-gray-400 text-[10px]">E5</div><div className="font-semibold">{formatPrice(s.e5)}</div></div>}
-                  {s.e10 != null   && <div><div className="text-gray-400 text-[10px]">E10</div><div className="font-semibold">{formatPrice(s.e10)}</div></div>}
-                  {s.diesel != null && <div><div className="text-gray-400 text-[10px]">Diesel</div><div className="font-semibold">{formatPrice(s.diesel)}</div></div>}
+      <MarkerClusterGroup
+        chunkedLoading
+        maxClusterRadius={50}
+        spiderfyOnMaxZoom
+        showCoverageOnHover={false}
+        disableClusteringAtZoom={15}
+      >
+        {fuelStations.map((s) => {
+          const isSelected = selectedStation?.id === s.id;
+          return (
+            <Marker
+              key={s.id}
+              position={[s.lat, s.lng]}
+              icon={isSelected ? fuelIconSelected : fuelIcon}
+              zIndexOffset={isSelected ? 1000 : 0}
+              eventHandlers={{ click: () => onSelectStation(s) }}
+            >
+              <Popup>
+                <strong className="text-sm">{s.brand || s.name}</strong>
+                <br />
+                <span className="text-xs text-gray-500">{s.street} {s.houseNumber}, {s.postCode} {s.place}</span>
+                {(s.e5 != null || s.e10 != null || s.diesel != null) && (
+                  <div className="mt-1.5 grid grid-cols-3 gap-x-2 text-xs text-center">
+                    {s.e5 != null    && <div><div className="text-gray-400 text-[10px]">E5</div><div className="font-semibold">{formatPrice(s.e5)}</div></div>}
+                    {s.e10 != null   && <div><div className="text-gray-400 text-[10px]">E10</div><div className="font-semibold">{formatPrice(s.e10)}</div></div>}
+                    {s.diesel != null && <div><div className="text-gray-400 text-[10px]">Diesel</div><div className="font-semibold">{formatPrice(s.diesel)}</div></div>}
+                  </div>
+                )}
+                <div className="mt-1 text-xs">
+                  <span className={s.isOpen ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>
+                    {s.isOpen ? '✓ Geöffnet' : '✗ Geschlossen'}
+                  </span>
                 </div>
-              )}
-              <div className="mt-1 text-xs">
-                <span className={s.isOpen ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>
-                  {s.isOpen ? '✓ Geöffnet' : '✗ Geschlossen'}
-                </span>
-              </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+              </Popup>
+            </Marker>
+          );
+        })}
 
-      {evChargers.map((c) => {
-        const lat = c.AddressInfo?.Latitude;
-        const lng = c.AddressInfo?.Longitude;
-        if (!lat || !lng) return null;
-        const isSelected = selectedCharger?.ID === c.ID;
-        const maxKw = c.Connections?.reduce((max, conn) => {
-          const kw = conn.PowerKW;
-          return kw != null && kw > max ? kw : max;
-        }, 0) || null;
-        return (
-          <Marker
-            key={c.ID}
-            position={[lat, lng]}
-            icon={isSelected ? evIconSelected : evIcon}
-            zIndexOffset={isSelected ? 1000 : 0}
-            eventHandlers={{ click: () => onSelectCharger(c) }}
-          >
-            <Popup>
-              <strong className="text-sm">{c.AddressInfo?.Title || 'Ladesäule'}</strong>
-              <br />
-              <span className="text-xs text-gray-500">{c.AddressInfo?.AddressLine1}, {c.AddressInfo?.Postcode} {c.AddressInfo?.Town}</span>
-              {maxKw > 0 && (
-                <div className="mt-1 text-xs font-semibold text-blue-700">⚡ max. {maxKw} kW</div>
-              )}
-            </Popup>
-          </Marker>
-        );
-      })}
+        {evChargers.map((c) => {
+          const lat = c.AddressInfo?.Latitude;
+          const lng = c.AddressInfo?.Longitude;
+          if (!lat || !lng) return null;
+          const isSelected = selectedCharger?.ID === c.ID;
+          const maxKw = c.Connections?.reduce((max, conn) => {
+            const kw = conn.PowerKW;
+            return kw != null && kw > max ? kw : max;
+          }, 0) || null;
+          return (
+            <Marker
+              key={c.ID}
+              position={[lat, lng]}
+              icon={isSelected ? evIconSelected : evIcon}
+              zIndexOffset={isSelected ? 1000 : 0}
+              eventHandlers={{ click: () => onSelectCharger(c) }}
+            >
+              <Popup>
+                <strong className="text-sm">{c.AddressInfo?.Title || 'Ladesäule'}</strong>
+                <br />
+                <span className="text-xs text-gray-500">{c.AddressInfo?.AddressLine1}, {c.AddressInfo?.Postcode} {c.AddressInfo?.Town}</span>
+                {maxKw > 0 && (
+                  <div className="mt-1 text-xs font-semibold text-blue-700">⚡ max. {maxKw} kW</div>
+                )}
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MarkerClusterGroup>
 
       <RouteLayer
         routeData={routeData}

@@ -6,6 +6,7 @@ import EVChargers from './components/EVChargers';
 import RoutingControl from './components/RoutingControl';
 import Settings from './components/Settings';
 import LocationSearch from './components/LocationSearch';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { loadSettings } from './utils/settings';
 
@@ -149,6 +150,7 @@ export default function App() {
               ? <span aria-hidden="true" className="animate-spin text-xs">⟳</span>
               : <span aria-hidden="true">📍</span>
             }
+            <span className="text-xs">GPS</span>
           </button>
         </div>
 
@@ -250,6 +252,7 @@ export default function App() {
             aria-labelledby={`tab-${activeTab}`}
             className="flex-1 overflow-hidden flex flex-col min-h-0"
           >
+            <ErrorBoundary label="Fehler im Seitenbereich">
             {activeTab === 'settings' ? (
               <Settings onClose={handleSettingsClose} />
             ) : !position ? (
@@ -341,6 +344,7 @@ export default function App() {
                 )}
               </>
             )}
+            </ErrorBoundary>
           </div>
         </aside>
 
@@ -350,19 +354,21 @@ export default function App() {
           aria-label="Interaktive Karte"
           className="flex-1 relative z-0 pb-[var(--tab-bar-total)] md:pb-0"
         >
-          <MapView
-            position={position}
-            fuelStations={fuelStations}
-            evChargers={evChargers}
-            routeData={routeData}
-            selectedRouteIndex={selectedRouteIndex}
-            onSelectRoute={setSelectedRouteIndex}
-            onSelectStation={handleSelectStation}
-            onSelectCharger={handleSelectCharger}
-            selectedStation={selectedStation}
-            selectedCharger={selectedCharger}
-            focusStation={focusStation}
-          />
+          <ErrorBoundary label="Fehler beim Laden der Karte">
+            <MapView
+              position={position}
+              fuelStations={fuelStations}
+              evChargers={evChargers}
+              routeData={routeData}
+              selectedRouteIndex={selectedRouteIndex}
+              onSelectRoute={setSelectedRouteIndex}
+              onSelectStation={handleSelectStation}
+              onSelectCharger={handleSelectCharger}
+              selectedStation={selectedStation}
+              selectedCharger={selectedCharger}
+              focusStation={focusStation}
+            />
+          </ErrorBoundary>
 
           {/* FAB: visible on mobile when panel is closed and a location is set */}
           {!mobilePanelOpen && position && (

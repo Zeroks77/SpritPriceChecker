@@ -131,7 +131,7 @@ export default function LocationSearch({ onLocationSelect }) {
           id={listboxId}
           role="listbox"
           aria-label="Suchergebnisse"
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] overflow-hidden max-h-52 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden max-h-52 overflow-y-auto"
         >
           {results.map((item, i) => (
             <li
