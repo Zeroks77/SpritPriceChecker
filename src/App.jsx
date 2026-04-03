@@ -139,12 +139,13 @@ export default function App() {
         {/* ── Sidebar (desktop) / Bottom sheet (mobile) ── */}
         <aside
           aria-label="Navigation und Inhalt"
+          style={{ bottom: 'var(--tab-bar-total)' }}
           className={[
-            // Mobile: fixed bottom sheet positioned above the tab bar
-            'fixed bottom-14 left-0 right-0 z-20 bg-white flex flex-col rounded-t-2xl shadow-2xl',
-            'max-h-[65vh] transition-transform duration-300 ease-out',
+            // Mobile: fixed bottom sheet positioned above the tab bar (+ iOS safe area)
+            'fixed left-0 right-0 z-20 bg-white flex flex-col rounded-t-2xl shadow-2xl',
+            'max-h-[70vh] transition-transform duration-300 ease-out',
             mobilePanelOpen ? 'translate-y-0' : 'translate-y-full',
-            // Desktop: regular inline sidebar, no transform
+            // Desktop: regular inline sidebar — bottom style has no effect once position:relative
             'md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto',
             'md:w-80 md:max-h-none md:rounded-none md:shadow-sm',
             'md:border-r md:border-gray-200 md:translate-y-0 md:transition-none',
