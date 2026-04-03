@@ -10,6 +10,7 @@ import {
   useMap,
 } from 'react-leaflet';
 import L from 'leaflet';
+import { formatPrice } from '../utils/format';
 
 // Fix Leaflet's default icon paths for bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -71,7 +72,9 @@ function RouteLayer({ routeData, selectedRouteIndex, onSelectRoute }) {
   if (!routeData?.features?.length) return null;
 
   const firstCoord = routeData.features[0]?.geometry?.coordinates?.[0];
-  const routeKey = `${routeData.features.length}-${firstCoord?.[0]?.toFixed(4)}-${firstCoord?.[1]?.toFixed(4)}`;
+  const routeKey = firstCoord?.length >= 2
+    ? `${routeData.features.length}-${firstCoord[0].toFixed(4)}-${firstCoord[1].toFixed(4)}`
+    : `${routeData.features.length}-fallback`;
 
   const features = routeData.features;
   const order = [
@@ -93,12 +96,6 @@ function RouteLayer({ routeData, selectedRouteIndex, onSelectRoute }) {
       />
     );
   });
-}
-
-function formatPrice(value) {
-  if (value == null) return '–';
-  const [euros, cents] = value.toFixed(3).split('.');
-  return `${euros},${cents.slice(0, 2)}\u2060${cents[2]} €`;
 }
 
 export default function MapView({

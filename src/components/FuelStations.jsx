@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchFuelStations } from '../utils/api';
+import { formatPriceDelta } from '../utils/format';
 
 // Short badge labels (fit in compact price badge); long labels for status bar / aria
 const FUEL_LABELS = { e5: 'Super E5', e10: 'Super E10', diesel: 'Diesel', all: 'Alle' };
@@ -16,7 +17,7 @@ function PriceTag({ value, highlight, delta }) {
       </span>
       {delta != null && delta > 0 && (
         <span className="text-[10px] text-red-500 font-medium leading-none mt-0.5">
-          +{delta.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+          {formatPriceDelta(delta)}
         </span>
       )}
     </span>
@@ -85,17 +86,21 @@ export default function FuelStations({ position, settings, fuelStations, onStati
     return (a.dist ?? 0) - (b.dist ?? 0); // 'dist'
   });
 
-  // Compute cheapest price per fuel key for delta highlighting (from full stations, not just visible)
-  const cheapest = {};
-  if (showAll) {
-    for (const key of FUEL_KEYS) {
-      const prices = stations.map((s) => s[key]).filter((v) => v != null);
-      cheapest[key] = prices.length > 0 ? Math.min(...prices) : null;
+  // Compute cheapest price per fuel key for delta highlighting (memoised, uses all fetched stations)
+  const cheapest = useMemo(() => {
+    const allStations = fuelStations || [];
+    const result = {};
+    if (showAll) {
+      for (const key of FUEL_KEYS) {
+        const prices = allStations.map((s) => s[key]).filter((v) => v != null);
+        result[key] = prices.length > 0 ? Math.min(...prices) : null;
+      }
+    } else {
+      const prices = allStations.map((s) => s[priceKey]).filter((v) => v != null);
+      result[priceKey] = prices.length > 0 ? Math.min(...prices) : null;
     }
-  } else {
-    const prices = stations.map((s) => s[priceKey]).filter((v) => v != null);
-    cheapest[priceKey] = prices.length > 0 ? Math.min(...prices) : null;
-  }
+    return result;
+  }, [fuelStations, showAll, priceKey]);
 
   return (
     <div className="flex flex-col h-full min-h-0">

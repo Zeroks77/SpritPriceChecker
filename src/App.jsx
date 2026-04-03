@@ -29,7 +29,7 @@ export default function App() {
   const [routeData, setRouteData] = useState(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
-  // Whether any API key that is needed by the current view is missing
+  // Red badge on settings tab when any API key is missing
   const missingKeys = !settings.tankerkoenigKey || !settings.openChargeMapKey || !settings.orsKey;
   const [manualPosition, setManualPosition] = useState(null);
 

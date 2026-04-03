@@ -19,9 +19,11 @@ function PowerBadge({ maxKw }) {
     maxKw >= 100 ? 'bg-purple-100 text-purple-700' :
     maxKw >= 22  ? 'bg-blue-100 text-blue-700'   :
                    'bg-gray-100 text-gray-600';
+  // MW only for truly exceptional cases (>= 1000 kW), show one decimal for precision
+  const label = maxKw >= 1000 ? `${(maxKw / 1000).toFixed(1)} MW` : `${maxKw} kW`;
   return (
     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${color}`}>
-      {maxKw >= 1000 ? `${(maxKw / 1000).toFixed(0)} MW` : `${maxKw} kW`}
+      {label}
     </span>
   );
 }
