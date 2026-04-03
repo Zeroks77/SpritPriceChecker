@@ -53,7 +53,7 @@ function HistoryLineChart({ history, fuelKeys }) {
   const padding = { top: 12, right: 8, bottom: 22, left: 8 };
   const minTime = chartData[0].t;
   const maxTime = chartData[chartData.length - 1].t;
-  const timeRange = maxTime - minTime || 1;
+  const timeRange = Math.max(maxTime - minTime, 1000);
   const validPrices = chartData.flatMap((entry) => fuelKeys.map((key) => entry[key]).filter((value) => value != null));
 
   if (validPrices.length === 0) {
