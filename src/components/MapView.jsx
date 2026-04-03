@@ -72,6 +72,7 @@ export default function MapView({
       zoom={position ? 13 : 6}
       className="map-container"
       style={{ height: '100%', width: '100%' }}
+      aria-label="Interaktive Karte mit Tankstellen und Ladesäulen"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
