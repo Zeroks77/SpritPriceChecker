@@ -6,8 +6,16 @@ const FUEL_KEYS = ['e5', 'e10', 'diesel'];
 const FUEL_LABELS = { e5: 'Super E5', e10: 'Super E10', diesel: 'Diesel' };
 const FUEL_COLORS = { e5: 'text-blue-700', e10: 'text-green-700', diesel: 'text-orange-700' };
 const FUEL_BG = { e5: 'bg-blue-50 ring-blue-200', e10: 'bg-green-50 ring-green-200', diesel: 'bg-orange-50 ring-orange-200' };
+const FUEL_STROKES = { e5: '#2563eb', e10: '#16a34a', diesel: '#ea580c' };
 
-const DAY_ABBR = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+function formatHistoryLabel(timestamp) {
+  return new Date(timestamp).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 function PriceCard({ label, value, colorClass, bgClass }) {
   if (value == null) return null;
@@ -23,30 +31,110 @@ function PriceCard({ label, value, colorClass, bgClass }) {
   );
 }
 
-function MiniBarChart({ values, labels, highlightIndex }) {
-  const validValues = values.filter((v) => v != null);
-  if (validValues.length === 0) return null;
-  const min = Math.min(...validValues);
-  const max = Math.max(...validValues);
-  const range = max - min || 1;
+function HistoryLineChart({ history, fuelKeys }) {
+  const chartData = history
+    .filter((entry) => fuelKeys.some((key) => entry[key] != null))
+    .slice(-30);
+
+  if (chartData.length < 2) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-xs text-gray-400">
+        Für den Linienverlauf werden mindestens zwei gespeicherte Preisstände benötigt.
+      </div>
+    );
+  }
+
+  const width = 320;
+  const height = 140;
+  const padding = { top: 12, right: 8, bottom: 22, left: 8 };
+  const minTime = chartData[0].t;
+  const maxTime = chartData[chartData.length - 1].t;
+  const timeRange = maxTime - minTime || 1;
+  const validPrices = chartData.flatMap((entry) => fuelKeys.map((key) => entry[key]).filter((value) => value != null));
+
+  if (validPrices.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-xs text-gray-400">
+        Noch keine historischen Preise für diese Auswahl gespeichert.
+      </div>
+    );
+  }
+
+  const minPrice = Math.min(...validPrices);
+  const maxPrice = Math.max(...validPrices);
+  const priceRange = maxPrice - minPrice || 0.01;
+
+  const xFor = (timestamp) => (
+    padding.left + ((timestamp - minTime) / timeRange) * (width - padding.left - padding.right)
+  );
+  const yFor = (price) => (
+    height - padding.bottom - ((price - minPrice) / priceRange) * (height - padding.top - padding.bottom)
+  );
 
   return (
-    <div className="flex items-end gap-px" style={{ height: 40 }}>
-      {values.map((v, i) => {
-        if (v == null) {
-          return <div key={i} className="flex-1" />;
-        }
-        const pct = ((v - min) / range) * 70 + 30; // 30%–100%
-        const isHighlight = i === highlightIndex;
-        return (
-          <div
-            key={i}
-            title={`${labels[i]}: ${formatPrice(v)}`}
-            className={`flex-1 rounded-t transition-colors ${isHighlight ? 'bg-green-500' : 'bg-blue-200'}`}
-            style={{ height: `${pct}%` }}
-          />
-        );
-      })}
+    <div className="rounded-xl border border-gray-200 bg-white p-3">
+      <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400 mb-2">
+        <span>{formatPrice(maxPrice)}</span>
+        <span>{chartData.length} Messpunkte</span>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible" role="img" aria-label="Historischer Preisverlauf">
+        <line
+          x1={padding.left}
+          y1={height - padding.bottom}
+          x2={width - padding.right}
+          y2={height - padding.bottom}
+          stroke="#d1d5db"
+          strokeWidth="1"
+        />
+        <line
+          x1={padding.left}
+          y1={padding.top}
+          x2={padding.left}
+          y2={height - padding.bottom}
+          stroke="#e5e7eb"
+          strokeWidth="1"
+        />
+        {fuelKeys.map((key) => {
+          const points = chartData
+            .filter((entry) => entry[key] != null)
+            .map((entry) => `${xFor(entry.t)},${yFor(entry[key])}`)
+            .join(' ');
+
+          if (!points) return null;
+
+          return (
+            <polyline
+              key={key}
+              fill="none"
+              stroke={FUEL_STROKES[key]}
+              strokeWidth="3"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              points={points}
+            />
+          );
+        })}
+      </svg>
+      <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-gray-400">
+        <span>{formatHistoryLabel(chartData[0].t)}</span>
+        <span>{formatPrice(minPrice)}</span>
+        <span>{formatHistoryLabel(chartData[chartData.length - 1].t)}</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {fuelKeys.map((key) => (
+          <span
+            key={key}
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium ring-1 ${FUEL_BG[key]} ${FUEL_COLORS[key]}`}
+          >
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: FUEL_STROKES[key] }}
+            />
+            {FUEL_LABELS[key]}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -59,6 +147,8 @@ export default function StationDetail({ station, settings, onClose, onPlanRoute,
     [history, fuelKey]
   );
   const recommendation = useMemo(() => getRecommendationText(history, fuelKey), [history, fuelKey]);
+  const historyKeys = settings?.fuelType === 'all' ? FUEL_KEYS : [fuelKey];
+  const lastObservation = history.at(-1);
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -110,59 +200,22 @@ export default function StationDetail({ station, settings, onClose, onPlanRoute,
 
         {/* Historical analysis */}
         {analysis && (
-          <>
-            {/* By day of week */}
-            {analysis.dayAvgs.some((v) => v != null) && (
-              <section>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-                  Ø Preis nach Wochentag
-                </h3>
-                <MiniBarChart
-                  values={analysis.dayAvgs}
-                  labels={DAY_ABBR}
-                  highlightIndex={analysis.bestDay}
-                />
-                <div className="flex mt-0.5">
-                  {DAY_ABBR.map((d, i) => (
-                    <div
-                      key={i}
-                      className={`flex-1 text-center text-[10px] font-medium ${
-                        i === analysis.bestDay ? 'text-green-600' : 'text-gray-400'
-                      }`}
-                    >
-                      {d}
-                    </div>
-                  ))}
-                </div>
-              </section>
+          <section>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                Historischer Preisverlauf
+              </h3>
+              <span className="text-[11px] text-gray-400">
+                {history.length} Beobachtungen
+              </span>
+            </div>
+            <HistoryLineChart history={history} fuelKeys={historyKeys} />
+            {lastObservation && (
+              <p className="text-[11px] text-gray-400 mt-2">
+                Letzte Aktualisierung: {formatHistoryLabel(lastObservation.t)} Uhr
+              </p>
             )}
-
-            {/* By hour */}
-            {analysis.hourAvgs.some((v) => v != null) && (
-              <section>
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-                  Ø Preis nach Uhrzeit
-                </h3>
-                <MiniBarChart
-                  values={analysis.hourAvgs}
-                  labels={Array.from({ length: 24 }, (_, i) => `${i}:00`)}
-                  highlightIndex={analysis.bestHour}
-                />
-                <div className="flex mt-0.5">
-                  <div className="flex w-full">
-                    {['0', '6', '12', '18', '23'].map((h) => (
-                      <div key={h} className="flex-1 text-[10px] text-gray-400 text-center first:text-left last:text-right">
-                        {h}h
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  {history.length} gespeicherte Beobachtungen
-                </p>
-              </section>
-            )}
-          </>
+          </section>
         )}
 
         {/* Recommendation */}

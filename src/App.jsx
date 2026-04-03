@@ -76,6 +76,11 @@ export default function App() {
     setMobilePanelOpen(true);
   }, []);
 
+  const handleRouteReady = useCallback((data) => {
+    setRouteData(data);
+    setSelectedRouteIndex(0);
+  }, []);
+
   const handleSelectCharger = useCallback((charger) => {
     setSelectedCharger(charger);
     setSelectedStation(null);
@@ -338,7 +343,7 @@ export default function App() {
                     settings={settings}
                     routeData={routeData}
                     selectedRouteIndex={selectedRouteIndex}
-                    onRouteReady={(data) => { setRouteData(data); setSelectedRouteIndex(0); }}
+                    onRouteReady={handleRouteReady}
                     onSelectRoute={setSelectedRouteIndex}
                   />
                 )}

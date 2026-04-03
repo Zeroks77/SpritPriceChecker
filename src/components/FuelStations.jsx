@@ -74,7 +74,7 @@ export default function FuelStations({ position, settings, fuelStations, onStati
         position.lng,
         settings.tankerkoenigKey,
         settings.radius,
-        settings.fuelType
+        'all'
       );
       if (onStationsChange) onStationsChange(data);
       // Persist price snapshots for historical analysis
