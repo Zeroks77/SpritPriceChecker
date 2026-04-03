@@ -69,6 +69,10 @@ function FitRoute({ routeData, selectedRouteIndex }) {
 function RouteLayer({ routeData, selectedRouteIndex, onSelectRoute }) {
   if (!routeData?.features?.length) return null;
 
+  // Use a lightweight stable key: feature count + first coordinate of first feature
+  const firstCoord = routeData.features[0]?.geometry?.coordinates?.[0];
+  const routeKey = `${routeData.features.length}-${firstCoord?.[0]?.toFixed(4)}-${firstCoord?.[1]?.toFixed(4)}`;
+
   // Render alternatives first (behind), then selected route on top
   const features = routeData.features;
   const order = [
@@ -83,7 +87,7 @@ function RouteLayer({ routeData, selectedRouteIndex, onSelectRoute }) {
     const color = isSelected ? (ROUTE_COLORS[idx] ?? '#2563eb') : (ROUTE_COLORS_DIM[idx] ?? '#d1d5db');
     return (
       <GeoJSON
-        key={`route-${JSON.stringify(routeData).length}-${idx}`}
+        key={`route-${routeKey}-${idx}`}
         data={{ type: 'FeatureCollection', features: [feature] }}
         style={{
           color,

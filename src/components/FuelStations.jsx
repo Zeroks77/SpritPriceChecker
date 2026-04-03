@@ -16,7 +16,7 @@ function PriceTag({ value, highlight, delta }) {
       </span>
       {delta != null && delta > 0 && (
         <span className="text-[10px] text-red-500 font-medium leading-none mt-0.5">
-          +{delta.toFixed(2).replace('.', ',')} €
+          +{delta.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
         </span>
       )}
     </span>
