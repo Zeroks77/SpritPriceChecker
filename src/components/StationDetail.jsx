@@ -81,7 +81,7 @@ function HistoryLineChart({ history, fuelKeys }) {
         <span>{formatPrice(maxPrice)}</span>
         <span>{chartData.length} Messpunkte</span>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible" role="img" aria-label="Historischer Preisverlauf">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible" role="img">
         <title>Historischer Preisverlauf</title>
         <desc>{`${fuelKeys.map((key) => FUEL_LABELS[key]).join(', ')} von ${startLabel} bis ${endLabel}`}</desc>
         <line
