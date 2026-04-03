@@ -51,7 +51,7 @@ function MiniBarChart({ values, labels, highlightIndex }) {
   );
 }
 
-export default function StationDetail({ station, settings, onClose, onPlanRoute }) {
+export default function StationDetail({ station, settings, onClose, onPlanRoute, onFocusStation }) {
   const fuelKey = settings?.fuelType === 'all' ? 'e5' : (settings?.fuelType || 'e5');
   const history = useMemo(() => loadStationHistory(station.id), [station.id]);
   const analysis = useMemo(
@@ -172,6 +172,16 @@ export default function StationDetail({ station, settings, onClose, onPlanRoute 
           </h3>
           <p className="text-xs text-amber-900 leading-relaxed">{recommendation}</p>
         </section>
+
+        {/* Show on map button */}
+        {onFocusStation && (
+          <button
+            onClick={() => onFocusStation(station)}
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm py-3 rounded-xl transition-colors touch-manipulation flex items-center justify-center gap-2"
+          >
+            <span aria-hidden="true">📍</span> Auf Karte anzeigen
+          </button>
+        )}
 
         {/* Route button */}
         <button

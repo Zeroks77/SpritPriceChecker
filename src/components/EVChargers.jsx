@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchEVChargers } from '../utils/api';
 
+function SkeletonRow() {
+  return (
+    <div className="px-4 py-3 flex items-start justify-between gap-2 animate-pulse">
+      <div className="flex-1 min-w-0">
+        <div className="h-4 bg-gray-200 rounded w-32 mb-2" />
+        <div className="h-3 bg-gray-100 rounded w-48 mb-1.5" />
+        <div className="h-3 bg-gray-100 rounded w-20" />
+      </div>
+      <div className="shrink-0">
+        <div className="h-5 bg-gray-200 rounded-full w-12" />
+      </div>
+    </div>
+  );
+}
+
 function ConnectionBadge({ quantity }) {
   return (
     <span
@@ -76,8 +91,9 @@ export default function EVChargers({ position, settings, evChargers, onChargersC
           onClick={load}
           disabled={loading || !position}
           aria-label="Ladesäulen neu laden"
-          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40 font-medium py-1 px-2 shrink-0"
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40 font-medium py-1.5 px-3 shrink-0 bg-blue-50 hover:bg-blue-100 rounded-full border border-blue-200 transition-colors touch-manipulation"
         >
+          <span aria-hidden="true" className={loading ? 'animate-spin' : ''}>🔄</span>
           {loading ? 'Lädt…' : 'Aktualisieren'}
         </button>
       </div>
@@ -102,6 +118,16 @@ export default function EVChargers({ position, settings, evChargers, onChargersC
       {error && (
         <div role="alert" className="mx-4 mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
           {error}
+        </div>
+      )}
+
+      {loading && chargers.length === 0 && (
+        <div className="flex-1 divide-y divide-gray-100" aria-hidden="true">
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
         </div>
       )}
 

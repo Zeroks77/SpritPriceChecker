@@ -50,6 +50,16 @@ function FlyTo({ position }) {
   return null;
 }
 
+function FlyToStation({ focusStation }) {
+  const map = useMap();
+  useEffect(() => {
+    if (focusStation) {
+      map.flyTo([focusStation.lat, focusStation.lng], 16, { duration: 1 });
+    }
+  }, [focusStation, map]);
+  return null;
+}
+
 function FitRoute({ routeData, selectedRouteIndex }) {
   const map = useMap();
   useEffect(() => {
@@ -109,6 +119,7 @@ export default function MapView({
   onSelectCharger,
   selectedStation,
   selectedCharger,
+  focusStation,
 }) {
   const DEFAULT_CENTER = [51.1657, 10.4515];
   const center = position ? [position.lat, position.lng] : DEFAULT_CENTER;
@@ -209,6 +220,7 @@ export default function MapView({
         onSelectRoute={onSelectRoute}
       />
       <FitRoute routeData={routeData} selectedRouteIndex={selectedRouteIndex} />
+      <FlyToStation focusStation={focusStation} />
     </MapContainer>
   );
 }

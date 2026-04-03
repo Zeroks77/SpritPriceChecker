@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import './App.css';
 import MapView from './components/MapView';
 import FuelStations from './components/FuelStations';
@@ -28,6 +28,10 @@ export default function App() {
   const [destination, setDestination] = useState(null);
   const [routeData, setRouteData] = useState(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [focusStation, setFocusStation] = useState(null);
+
+  // Swipe-to-close state for mobile bottom sheet
+  const swipeRef = useRef({ startY: 0, currentY: 0, swiping: false });
 
   // Red badge on settings tab when any API key is missing
   const missingKeys = !settings.tankerkoenigKey || !settings.openChargeMapKey || !settings.orsKey;
@@ -92,6 +96,28 @@ export default function App() {
       setMobilePanelOpen(true);
     }
   }
+
+  // Swipe-to-close handlers for mobile bottom sheet drag handle
+  function handleSwipeStart(e) {
+    const touch = e.touches[0];
+    swipeRef.current = { startY: touch.clientY, currentY: touch.clientY, swiping: true };
+  }
+  function handleSwipeMove(e) {
+    if (!swipeRef.current.swiping) return;
+    swipeRef.current.currentY = e.touches[0].clientY;
+  }
+  function handleSwipeEnd() {
+    if (!swipeRef.current.swiping) return;
+    const delta = swipeRef.current.currentY - swipeRef.current.startY;
+    if (delta > 60) {
+      setMobilePanelOpen(false);
+    }
+    swipeRef.current.swiping = false;
+  }
+
+  const handleFocusStation = useCallback((station) => {
+    setFocusStation({ lat: station.lat, lng: station.lng });
+  }, []);
 
   return (
     <div className="flex flex-col h-dvh bg-gray-50">
@@ -162,12 +188,17 @@ export default function App() {
             mobilePanelOpen ? 'translate-y-0' : 'translate-y-full',
             // Desktop: regular inline sidebar — override mobile-specific values
             'md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto',
-            'md:w-80 md:h-auto md:max-h-none md:rounded-none md:shadow-sm',
+            'md:w-96 md:h-auto md:max-h-none md:rounded-none md:shadow-sm',
             'md:border-r md:border-gray-200 md:translate-y-0 md:transition-none',
           ].join(' ')}
         >
           {/* Drag handle + close button (mobile only) */}
-          <div className="md:hidden flex items-center px-4 pt-3 pb-1 shrink-0">
+          <div
+            className="md:hidden flex items-center px-4 pt-3 pb-1 shrink-0 cursor-grab"
+            onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
+            onTouchEnd={handleSwipeEnd}
+          >
             <div className="flex-1 flex justify-center">
               <div className="w-10 h-1 bg-gray-300 rounded-full" aria-hidden="true" />
             </div>
@@ -281,6 +312,7 @@ export default function App() {
                         onStationsChange={setFuelStations}
                         onSelectStation={handleSelectStation}
                         onPlanRoute={handleSwitchToRouteTab}
+                        onFocusStation={handleFocusStation}
                         selectedStation={selectedStation}
                       />
                     ) : (
@@ -328,6 +360,7 @@ export default function App() {
             onSelectCharger={handleSelectCharger}
             selectedStation={selectedStation}
             selectedCharger={selectedCharger}
+            focusStation={focusStation}
           />
 
           {/* FAB: visible on mobile when panel is closed and a location is set */}
