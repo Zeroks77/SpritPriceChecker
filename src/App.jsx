@@ -315,7 +315,7 @@ export default function App() {
         <main
           id="main-map"
           aria-label="Interaktive Karte"
-          className="flex-1 relative pb-[var(--tab-bar-total)] md:pb-0"
+          className="flex-1 relative z-0 pb-[var(--tab-bar-total)] md:pb-0"
         >
           <MapView
             position={position}

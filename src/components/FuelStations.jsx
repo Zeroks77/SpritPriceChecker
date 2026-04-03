@@ -77,9 +77,9 @@ export default function FuelStations({ position, settings, fuelStations, onStati
     load();
   }, [load]);
 
-  // When the parent clears selectedStation, also close the detail view
+  // Sync detail view with selectedStation (open on map-marker click, close on deselect)
   useEffect(() => {
-    if (!selectedStation) setShowDetail(false);
+    setShowDetail(!!selectedStation);
   }, [selectedStation]);
 
   const showAll = settings.fuelType === 'all';
