@@ -85,28 +85,45 @@ export default function App() {
       </a>
 
       {/* Header */}
-      <header className="bg-blue-700 text-white shadow-md z-10 flex items-center px-3 py-2 gap-2 sm:gap-3 sm:px-4 shrink-0">
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xl sm:text-2xl" aria-hidden="true">⛽</span>
-          <div>
-            <h1 className="text-sm sm:text-base font-bold leading-none">SpritPriceChecker</h1>
-            <p className="text-blue-200 text-xs hidden sm:block">Spritpreise &amp; E-Ladesäulen</p>
+      <header className="bg-blue-700 text-white shadow-md z-10 flex flex-col sm:flex-row sm:items-center px-3 py-2 gap-1.5 sm:gap-3 sm:px-4 shrink-0">
+        {/* Row 1: Logo + GPS button (mobile), Logo (desktop) */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 sm:flex-none shrink-0">
+            <span className="text-xl sm:text-2xl" aria-hidden="true">⛽</span>
+            <div>
+              <h1 className="text-sm sm:text-base font-bold leading-none">SpritPriceChecker</h1>
+              <p className="text-blue-200 text-xs hidden sm:block">Spritpreise &amp; E-Ladesäulen</p>
+            </div>
           </div>
+          {/* GPS button – shown inline on mobile (top-right of first row) */}
+          <button
+            onClick={handleGeolocate}
+            disabled={geoLoading}
+            aria-label={geoLoading ? 'Standort wird ermittelt…' : 'GPS-Standort verwenden'}
+            className="sm:hidden flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white text-sm px-2.5 py-1.5 rounded-lg disabled:opacity-60 transition-colors ml-auto"
+          >
+            {geoLoading
+              ? <span aria-hidden="true" className="animate-spin text-xs">⟳</span>
+              : <span aria-hidden="true">📍</span>
+            }
+          </button>
         </div>
 
+        {/* Row 2 on mobile: full-width search; inline on desktop */}
         <LocationSearch onLocationSelect={handleLocationSelect} />
 
+        {/* GPS button – desktop only */}
         <button
           onClick={handleGeolocate}
           disabled={geoLoading}
           aria-label={geoLoading ? 'Standort wird ermittelt…' : 'GPS-Standort verwenden'}
-          className="flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white text-sm px-2.5 py-1.5 rounded-lg disabled:opacity-60 transition-colors shrink-0"
+          className="hidden sm:flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white text-sm px-2.5 py-1.5 rounded-lg disabled:opacity-60 transition-colors shrink-0"
         >
           {geoLoading
             ? <span aria-hidden="true" className="animate-spin text-xs">⟳</span>
             : <span aria-hidden="true">📍</span>
           }
-          <span className="hidden sm:inline text-xs">GPS</span>
+          <span className="text-xs">GPS</span>
         </button>
       </header>
 
