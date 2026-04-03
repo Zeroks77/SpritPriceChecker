@@ -27,3 +27,23 @@
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
+
+/* iOS safe area helpers */
+:root {
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --tab-bar-height: 3.5rem; /* 56px / h-14 */
+  --tab-bar-total: calc(var(--tab-bar-height) + var(--safe-area-bottom));
+}
+
+/* Smooth momentum scrolling for lists on iOS */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* On mobile, push Leaflet's bottom-right controls above the tab bar */
+@media (max-width: 767px) {
+  .leaflet-bottom {
+    bottom: var(--tab-bar-total);
+  }
+}

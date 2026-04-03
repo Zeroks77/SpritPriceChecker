@@ -86,7 +86,7 @@ export default function LocationSearch({ onLocationSelect }) {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative flex-1 max-w-xs">
+    <div ref={wrapperRef} className="relative w-full sm:flex-1 sm:max-w-xs">
       <div className="flex items-center bg-white/10 border border-white/30 rounded-lg px-2 gap-1.5">
         <span aria-hidden="true" className="text-white/70 text-sm shrink-0">🔍</span>
         <input

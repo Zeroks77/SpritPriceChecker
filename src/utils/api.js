@@ -9,7 +9,7 @@ const ORS_BASE = 'https://api.openrouteservice.org';
  * @param {number} lat
  * @param {number} lng
  * @param {string} apiKey
- * @param {number} radius - radius in km (max 25)
+ * @param {number} radius - radius in km (max 60)
  * @param {'e5'|'e10'|'diesel'|'all'} type
  */
 export async function fetchFuelStations(lat, lng, apiKey, radius = 5, type = 'all') {
@@ -46,15 +46,31 @@ export async function fetchEVChargers(lat, lng, apiKey, radius = 5) {
 
 /**
  * Fetch a route between two coordinates using OpenRouteService.
+ * For driving-car: requests up to 3 alternative routes and activates
+ * time-dependent routing (historical OSM traffic speeds) via departure_time.
  * @param {[number,number]} from - [lng, lat]
  * @param {[number,number]} to - [lng, lat]
  * @param {string} apiKey
  * @param {'driving-car'|'cycling-regular'|'foot-walking'} profile
  */
 export async function fetchRoute(from, to, apiKey, profile = 'driving-car') {
+  const isDriving = profile === 'driving-car';
+  const body = {
+    coordinates: [from, to],
+    // Time-dependent routing uses historical OSM speed profiles for realistic ETAs
+    ...(isDriving && { departure_time: Math.floor(Date.now() / 1000) }),
+    // Request up to 3 alternative routes for car routing
+    ...(isDriving && {
+      alternative_routes: {
+        target_count: 3,
+        weight_factor: 1.4,
+        share_factor: 0.6,
+      },
+    }),
+  };
   const { data } = await axios.post(
     `${ORS_BASE}/v2/directions/${profile}/geojson`,
-    { coordinates: [from, to] },
+    body,
     { headers: { Authorization: apiKey, 'Content-Type': 'application/json' } }
   );
   return data;
