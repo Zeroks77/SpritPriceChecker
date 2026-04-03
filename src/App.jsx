@@ -27,6 +27,7 @@ export default function App() {
   const [selectedCharger, setSelectedCharger] = useState(null);
   const [destination, setDestination] = useState(null);
   const [routeData, setRouteData] = useState(null);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [manualPosition, setManualPosition] = useState(null);
 
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation();
@@ -53,6 +54,8 @@ export default function App() {
     setSelectedStation(station);
     setSelectedCharger(null);
     setDestination({ lat: station.lat, lng: station.lng, name: station.brand || station.name });
+    setRouteData(null);
+    setSelectedRouteIndex(0);
     setActiveTab('route');
     setMobilePanelOpen(true);
   }, []);
@@ -64,6 +67,8 @@ export default function App() {
     const lng = charger.AddressInfo?.Longitude;
     if (lat && lng) {
       setDestination({ lat, lng, name: charger.AddressInfo?.Title || 'Ladesäule' });
+      setRouteData(null);
+      setSelectedRouteIndex(0);
       setActiveTab('route');
       setMobilePanelOpen(true);
     }
@@ -280,7 +285,10 @@ export default function App() {
                     position={position}
                     destination={destination}
                     settings={settings}
-                    onRouteReady={setRouteData}
+                    routeData={routeData}
+                    selectedRouteIndex={selectedRouteIndex}
+                    onRouteReady={(data) => { setRouteData(data); setSelectedRouteIndex(0); }}
+                    onSelectRoute={setSelectedRouteIndex}
                   />
                 )}
               </>
@@ -300,6 +308,8 @@ export default function App() {
             fuelStations={fuelStations}
             evChargers={evChargers}
             routeData={routeData}
+            selectedRouteIndex={selectedRouteIndex}
+            onSelectRoute={setSelectedRouteIndex}
             onSelectStation={handleSelectStation}
             onSelectCharger={handleSelectCharger}
             selectedStation={selectedStation}

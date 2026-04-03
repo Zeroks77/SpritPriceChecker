@@ -32,6 +32,10 @@ const fuelIconSelected = makeIcon('⛽', '#1d4ed8', 36);
 const evIcon = makeIcon('⚡', '#16a34a');
 const evIconSelected = makeIcon('⚡', '#15803d', 36);
 
+// Colours per route index: matches RoutingControl cards
+const ROUTE_COLORS = ['#2563eb', '#ea580c', '#7c3aed'];
+const ROUTE_COLORS_DIM = ['#93c5fd', '#fed7aa', '#ddd6fe']; // dimmed alternatives
+
 function FlyTo({ position }) {
   const map = useMap();
   useEffect(() => {
@@ -42,15 +46,56 @@ function FlyTo({ position }) {
   return null;
 }
 
-function RouteLayer({ routeData }) {
-  if (!routeData) return null;
-  return (
-    <GeoJSON
-      key={JSON.stringify(routeData)}
-      data={routeData}
-      style={{ color: '#2563eb', weight: 4, opacity: 0.8 }}
-    />
-  );
+// Fit map to the currently selected route feature
+function FitRoute({ routeData, selectedRouteIndex }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!routeData?.features?.length) return;
+    const feature = routeData.features[selectedRouteIndex] ?? routeData.features[0];
+    if (!feature?.geometry) return;
+    try {
+      const bounds = L.geoJSON(feature).getBounds();
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15, animate: true, duration: 0.8 });
+      }
+    } catch {
+      // ignore invalid geometries
+    }
+  }, [routeData, selectedRouteIndex, map]);
+  return null;
+}
+
+// Render each route feature as its own coloured polyline so alternatives are visible
+function RouteLayer({ routeData, selectedRouteIndex, onSelectRoute }) {
+  if (!routeData?.features?.length) return null;
+
+  // Render alternatives first (behind), then selected route on top
+  const features = routeData.features;
+  const order = [
+    ...features.map((_, i) => i).filter((i) => i !== selectedRouteIndex),
+    selectedRouteIndex,
+  ];
+
+  return order.map((idx) => {
+    const feature = features[idx];
+    if (!feature) return null;
+    const isSelected = idx === selectedRouteIndex;
+    const color = isSelected ? (ROUTE_COLORS[idx] ?? '#2563eb') : (ROUTE_COLORS_DIM[idx] ?? '#d1d5db');
+    return (
+      <GeoJSON
+        key={`route-${JSON.stringify(routeData).length}-${idx}`}
+        data={{ type: 'FeatureCollection', features: [feature] }}
+        style={{
+          color,
+          weight: isSelected ? 5 : 3,
+          opacity: isSelected ? 0.92 : 0.55,
+        }}
+        eventHandlers={{
+          click: () => !isSelected && onSelectRoute && onSelectRoute(idx),
+        }}
+      />
+    );
+  });
 }
 
 export default function MapView({
@@ -58,6 +103,8 @@ export default function MapView({
   fuelStations,
   evChargers,
   routeData,
+  selectedRouteIndex = 0,
+  onSelectRoute,
   onSelectStation,
   onSelectCharger,
   selectedStation,
@@ -137,7 +184,12 @@ export default function MapView({
         );
       })}
 
-      <RouteLayer routeData={routeData} />
+      <RouteLayer
+        routeData={routeData}
+        selectedRouteIndex={selectedRouteIndex}
+        onSelectRoute={onSelectRoute}
+      />
+      <FitRoute routeData={routeData} selectedRouteIndex={selectedRouteIndex} />
     </MapContainer>
   );
 }
