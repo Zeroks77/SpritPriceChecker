@@ -38,6 +38,8 @@ export default function FuelStations({ position, settings, fuelStations, onStati
   const stations = fuelStations || [];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('dist'); // 'dist' | 'price'
+  const [openOnly, setOpenOnly] = useState(false);
 
   const load = useCallback(async () => {
     if (!position) return;
@@ -70,7 +72,20 @@ export default function FuelStations({ position, settings, fuelStations, onStati
   const showAll = settings.fuelType === 'all';
   const priceKey = showAll ? 'e5' : settings.fuelType;
 
-  // Compute cheapest price per fuel key for delta highlighting
+  // Apply open-only filter
+  const filtered = openOnly ? stations.filter((s) => s.isOpen) : stations;
+
+  // Apply sort (client-side on fetched data)
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'price') {
+      const pa = a[priceKey] ?? Infinity;
+      const pb = b[priceKey] ?? Infinity;
+      return pa - pb;
+    }
+    return (a.dist ?? 0) - (b.dist ?? 0); // 'dist'
+  });
+
+  // Compute cheapest price per fuel key for delta highlighting (from full stations, not just visible)
   const cheapest = {};
   if (showAll) {
     for (const key of FUEL_KEYS) {
@@ -84,12 +99,13 @@ export default function FuelStations({ position, settings, fuelStations, onStati
 
   return (
     <div className="flex flex-col h-full min-h-0">
+      {/* Status bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 shrink-0">
         <span aria-live="polite" aria-atomic="true" className="text-xs text-gray-500 truncate mr-2">
           {position
             ? loading
               ? 'Lädt Tankstellen…'
-              : `${stations.length} Stationen · ${settings.radius} km · ${FUEL_LABELS[settings.fuelType]}`
+              : `${sorted.length}${openOnly ? `/${stations.length}` : ''} Stationen · ${settings.radius} km · ${FUEL_LABELS[settings.fuelType]}`
             : 'Kein Standort gewählt'}
         </span>
         <button
@@ -102,20 +118,70 @@ export default function FuelStations({ position, settings, fuelStations, onStati
         </button>
       </div>
 
+      {/* Sort & Filter chips */}
+      {stations.length > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 shrink-0 overflow-x-auto">
+          {/* Sort toggle */}
+          <span className="text-[11px] text-gray-400 shrink-0">Sortieren:</span>
+          <div role="group" aria-label="Sortierung" className="flex gap-1 shrink-0">
+            <button
+              onClick={() => setSortBy('dist')}
+              aria-pressed={sortBy === 'dist'}
+              className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors touch-manipulation ${
+                sortBy === 'dist'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
+              }`}
+            >
+              📍 Entfernung
+            </button>
+            <button
+              onClick={() => setSortBy('price')}
+              aria-pressed={sortBy === 'price'}
+              className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors touch-manipulation ${
+                sortBy === 'price'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'
+              }`}
+            >
+              💰 Preis
+            </button>
+          </div>
+          {/* Open-only filter */}
+          <button
+            onClick={() => setOpenOnly((v) => !v)}
+            aria-pressed={openOnly}
+            className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors shrink-0 touch-manipulation ${
+              openOnly
+                ? 'bg-green-600 text-white border-green-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
+            }`}
+          >
+            ✅ Nur geöffnet
+          </button>
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="mx-4 mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
           {error}
         </div>
       )}
 
-      {!error && stations.length === 0 && !loading && position && (
-        <p className="px-4 pt-4 text-sm text-gray-400">Keine Tankstellen gefunden.</p>
+      {!error && sorted.length === 0 && !loading && position && (
+        <p className="px-4 pt-4 text-sm text-gray-400">
+          {openOnly && stations.length > 0
+            ? 'Keine geöffneten Tankstellen gefunden. Filter entfernen?'
+            : 'Keine Tankstellen gefunden.'}
+        </p>
       )}
 
       <ul aria-label="Tankstellen in der Nähe" className="flex-1 overflow-y-auto divide-y divide-gray-100 scroll-touch">
-        {stations.map((s, idx) => {
+        {sorted.map((s, idx) => {
           const isSelected = selectedStation?.id === s.id;
           const isCheapest = cheapest[priceKey] != null && s[priceKey] === cheapest[priceKey];
+          // Show "Nächste" on first item only in distance-sorted view
+          const isNearest = sortBy === 'dist' && idx === 0 && !isCheapest && s.dist != null;
 
           return (
             <li key={s.id}>
@@ -137,7 +203,7 @@ export default function FuelStations({ position, settings, fuelStations, onStati
                           🏆 Günstigste
                         </span>
                       )}
-                      {idx === 0 && !isCheapest && s.dist != null && (
+                      {isNearest && (
                         <span className="shrink-0 text-[10px] text-blue-500 font-medium">Nächste</span>
                       )}
                     </div>

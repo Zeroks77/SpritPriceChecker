@@ -16,8 +16,23 @@ export default function Settings({ onClose }) {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-4 h-full overflow-y-auto">
+    <div className="p-4 flex flex-col gap-4 h-full overflow-y-auto scroll-touch">
       <h2 className="text-lg font-bold text-gray-800">Einstellungen</h2>
+
+      {/* First-run hint when no keys are set yet */}
+      {!form.tankerkoenigKey && !form.openChargeMapKey && !form.orsKey && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex gap-2">
+          <span aria-hidden="true" className="shrink-0 text-lg">👋</span>
+          <div>
+            <p className="font-semibold">Willkommen!</p>
+            <p className="text-xs mt-0.5 text-blue-700">
+              Trage deine kostenlosen API-Schlüssel ein, um Tankstellen, Ladesäulen und Routen zu laden.
+              Die Links neben den Feldern führen direkt zur Anmeldung.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSave} className="flex flex-col gap-4">
         <fieldset className="border border-gray-200 rounded-lg p-3 flex flex-col gap-3">
           <legend className="text-sm font-semibold text-gray-600 px-1">API-Schlüssel</legend>

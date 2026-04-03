@@ -28,6 +28,9 @@ export default function App() {
   const [destination, setDestination] = useState(null);
   const [routeData, setRouteData] = useState(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+
+  // Whether any API key that is needed by the current view is missing
+  const missingKeys = !settings.tankerkoenigKey || !settings.openChargeMapKey || !settings.orsKey;
   const [manualPosition, setManualPosition] = useState(null);
 
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation();
@@ -191,7 +194,12 @@ export default function App() {
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <span aria-hidden="true">{tab.emoji}</span>
+                <span className="relative inline-block" aria-hidden="true">
+                  {tab.emoji}
+                  {tab.id === 'settings' && missingKeys && (
+                    <span className="absolute -top-0.5 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white" aria-hidden="true" />
+                  )}
+                </span>
                 {' '}{tab.ariaLabel}
               </button>
             ))}
@@ -315,6 +323,18 @@ export default function App() {
             selectedStation={selectedStation}
             selectedCharger={selectedCharger}
           />
+
+          {/* FAB: visible on mobile when panel is closed and a location is set */}
+          {!mobilePanelOpen && position && (
+            <button
+              onClick={() => { setActiveTab('stations'); setMobilePanelOpen(true); }}
+              aria-label="Stationsliste öffnen"
+              className="md:hidden absolute left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white text-gray-800 text-sm font-semibold px-4 py-2.5 rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-shadow touch-manipulation"
+              style={{ bottom: 'calc(var(--tab-bar-total) + 0.75rem)' }}
+            >
+              <span aria-hidden="true">📋</span> Liste anzeigen
+            </button>
+          )}
         </main>
       </div>
 
@@ -327,18 +347,24 @@ export default function App() {
       >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id && mobilePanelOpen;
+          const showBadge = tab.id === 'settings' && missingKeys;
           return (
             <button
               key={tab.id}
               role="tab"
               aria-selected={isActive}
-              aria-label={tab.ariaLabel}
+              aria-label={tab.ariaLabel + (showBadge ? ' – API-Keys fehlen' : '')}
               onClick={() => handleMobileTabClick(tab.id)}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-14 transition-colors touch-manipulation ${
                 isActive ? 'text-blue-700' : 'text-gray-500 active:text-gray-700'
               }`}
             >
-              <span className="text-xl leading-none" aria-hidden="true">{tab.emoji}</span>
+              <span className="relative text-xl leading-none" aria-hidden="true">
+                {tab.emoji}
+                {showBadge && (
+                  <span className="absolute -top-0.5 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white" aria-hidden="true" />
+                )}
+              </span>
               <span className="text-[11px] font-medium">{tab.shortLabel}</span>
             </button>
           );
