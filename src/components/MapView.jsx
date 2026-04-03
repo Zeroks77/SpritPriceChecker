@@ -18,19 +18,19 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const fuelIcon = L.divIcon({
-  html: `<div style="background:#2563eb;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)">⛽</div>`,
-  className: '',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-});
+function makeIcon(emoji, bg, size = 28) {
+  return L.divIcon({
+    html: `<div style="background:${bg};color:#fff;border-radius:50%;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;font-size:${Math.round(size * 0.5)}px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)">${emoji}</div>`,
+    className: '',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
 
-const evIcon = L.divIcon({
-  html: `<div style="background:#16a34a;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)">⚡</div>`,
-  className: '',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-});
+const fuelIcon = makeIcon('⛽', '#2563eb');
+const fuelIconSelected = makeIcon('⛽', '#1d4ed8', 36);
+const evIcon = makeIcon('⚡', '#16a34a');
+const evIconSelected = makeIcon('⚡', '#15803d', 36);
 
 function FlyTo({ position }) {
   const map = useMap();
@@ -44,7 +44,13 @@ function FlyTo({ position }) {
 
 function RouteLayer({ routeData }) {
   if (!routeData) return null;
-  return <GeoJSON key={JSON.stringify(routeData)} data={routeData} style={{ color: '#2563eb', weight: 4, opacity: 0.8 }} />;
+  return (
+    <GeoJSON
+      key={JSON.stringify(routeData)}
+      data={routeData}
+      style={{ color: '#2563eb', weight: 4, opacity: 0.8 }}
+    />
+  );
 }
 
 export default function MapView({
@@ -54,6 +60,8 @@ export default function MapView({
   routeData,
   onSelectStation,
   onSelectCharger,
+  selectedStation,
+  selectedCharger,
 }) {
   const DEFAULT_CENTER = [51.1657, 10.4515]; // Germany center
   const center = position ? [position.lat, position.lng] : DEFAULT_CENTER;
@@ -83,32 +91,38 @@ export default function MapView({
         </>
       )}
 
-      {fuelStations.map((s) => (
-        <Marker
-          key={s.id}
-          position={[s.lat, s.lng]}
-          icon={fuelIcon}
-          eventHandlers={{ click: () => onSelectStation(s) }}
-        >
-          <Popup>
-            <strong>{s.brand || s.name}</strong>
-            <br />
-            {s.street} {s.houseNumber}
-            <br />
-            {s.postCode} {s.place}
-          </Popup>
-        </Marker>
-      ))}
+      {fuelStations.map((s) => {
+        const isSelected = selectedStation?.id === s.id;
+        return (
+          <Marker
+            key={s.id}
+            position={[s.lat, s.lng]}
+            icon={isSelected ? fuelIconSelected : fuelIcon}
+            zIndexOffset={isSelected ? 1000 : 0}
+            eventHandlers={{ click: () => onSelectStation(s) }}
+          >
+            <Popup>
+              <strong>{s.brand || s.name}</strong>
+              <br />
+              {s.street} {s.houseNumber}
+              <br />
+              {s.postCode} {s.place}
+            </Popup>
+          </Marker>
+        );
+      })}
 
       {evChargers.map((c) => {
         const lat = c.AddressInfo?.Latitude;
         const lng = c.AddressInfo?.Longitude;
         if (!lat || !lng) return null;
+        const isSelected = selectedCharger?.ID === c.ID;
         return (
           <Marker
             key={c.ID}
             position={[lat, lng]}
-            icon={evIcon}
+            icon={isSelected ? evIconSelected : evIcon}
+            zIndexOffset={isSelected ? 1000 : 0}
             eventHandlers={{ click: () => onSelectCharger(c) }}
           >
             <Popup>
