@@ -65,7 +65,7 @@ export default function App() {
     }
   }, []);
 
-  const handlePlanRoute = useCallback(() => {
+  const handleSwitchToRouteTab = useCallback(() => {
     setActiveTab('route');
     setMobilePanelOpen(true);
   }, []);
@@ -280,7 +280,7 @@ export default function App() {
                         fuelStations={fuelStations}
                         onStationsChange={setFuelStations}
                         onSelectStation={handleSelectStation}
-                        onPlanRoute={handlePlanRoute}
+                        onPlanRoute={handleSwitchToRouteTab}
                         selectedStation={selectedStation}
                       />
                     ) : (

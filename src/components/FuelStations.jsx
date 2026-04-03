@@ -114,6 +114,11 @@ export default function FuelStations({ position, settings, fuelStations, onStati
     return result;
   }, [fuelStations, showAll, priceKey]);
 
+  const handleCloseDetail = useCallback(() => {
+    setShowDetail(false);
+    onSelectStation(null);
+  }, [onSelectStation]);
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Station detail overlay */}
@@ -121,8 +126,8 @@ export default function FuelStations({ position, settings, fuelStations, onStati
         <StationDetail
           station={selectedStation}
           settings={settings}
-          onClose={() => { setShowDetail(false); onSelectStation(null); }}
-          onPlanRoute={(s) => { onPlanRoute(s); }}
+          onClose={handleCloseDetail}
+          onPlanRoute={onPlanRoute}
         />
       )}
 

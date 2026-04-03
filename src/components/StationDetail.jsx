@@ -149,13 +149,6 @@ export default function StationDetail({ station, settings, onClose, onPlanRoute 
                   highlightIndex={analysis.bestHour}
                 />
                 <div className="flex mt-0.5">
-                  {[0, 6, 12, 18, 23].map((h) => (
-                    <div
-                      key={h}
-                      className="text-[10px] text-gray-400"
-                      style={{ position: 'absolute', left: `${(h / 24) * 100}%` }}
-                    />
-                  ))}
                   <div className="flex w-full">
                     {['0', '6', '12', '18', '23'].map((h) => (
                       <div key={h} className="flex-1 text-[10px] text-gray-400 text-center first:text-left last:text-right">
