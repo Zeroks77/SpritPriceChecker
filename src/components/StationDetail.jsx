@@ -35,6 +35,8 @@ function HistoryLineChart({ history, fuelKeys }) {
   const chartData = history
     .filter((entry) => fuelKeys.some((key) => entry[key] != null))
     .slice(-30);
+  const startLabel = chartData[0] ? formatHistoryLabel(chartData[0].t) : '';
+  const endLabel = chartData.at(-1) ? formatHistoryLabel(chartData.at(-1).t) : '';
 
   if (chartData.length < 2) {
     return (
@@ -78,6 +80,8 @@ function HistoryLineChart({ history, fuelKeys }) {
         <span>{chartData.length} Messpunkte</span>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible" role="img" aria-label="Historischer Preisverlauf">
+        <title>Historischer Preisverlauf</title>
+        <desc>{`${fuelKeys.map((key) => FUEL_LABELS[key]).join(', ')} von ${startLabel} bis ${endLabel}`}</desc>
         <line
           x1={padding.left}
           y1={height - padding.bottom}
@@ -116,9 +120,9 @@ function HistoryLineChart({ history, fuelKeys }) {
         })}
       </svg>
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-gray-400">
-        <span>{formatHistoryLabel(chartData[0].t)}</span>
+        <span>{startLabel}</span>
         <span>{formatPrice(minPrice)}</span>
-        <span>{formatHistoryLabel(chartData[chartData.length - 1].t)}</span>
+        <span>{endLabel}</span>
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
         {fuelKeys.map((key) => (
@@ -212,7 +216,7 @@ export default function StationDetail({ station, settings, onClose, onPlanRoute,
             <HistoryLineChart history={history} fuelKeys={historyKeys} />
             {lastObservation && (
               <p className="text-[11px] text-gray-400 mt-2">
-                Letzte Aktualisierung: {formatHistoryLabel(lastObservation.t)} Uhr
+                Letzte Aktualisierung: {formatHistoryLabel(lastObservation.t)}
               </p>
             )}
           </section>
