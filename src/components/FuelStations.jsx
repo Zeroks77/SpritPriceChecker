@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchFuelStations } from '../utils/api';
 
-const FUEL_LABELS = { e5: 'E5', e10: 'E10', diesel: 'Diesel', all: 'Alle' };
+// Short badge labels (fit in compact price badge); long labels for status bar / aria
+const FUEL_LABELS = { e5: 'Super E5', e10: 'Super E10', diesel: 'Diesel', all: 'Alle' };
+const FUEL_BADGE_LABELS = { e5: 'E5', e10: 'E10', diesel: 'Diesel' };
 const FUEL_KEYS = ['e5', 'e10', 'diesel'];
 
 function PriceTag({ value, highlight, delta }) {
@@ -135,7 +137,7 @@ export default function FuelStations({ position, settings, fuelStations, onStati
                           🏆 Günstigste
                         </span>
                       )}
-                      {idx === 0 && !isCheapest && (
+                      {idx === 0 && !isCheapest && s.dist != null && (
                         <span className="shrink-0 text-[10px] text-blue-500 font-medium">Nächste</span>
                       )}
                     </div>
@@ -161,7 +163,7 @@ export default function FuelStations({ position, settings, fuelStations, onStati
                           return (
                             <PriceBadge
                               key={key}
-                              label={FUEL_LABELS[key]}
+                              label={FUEL_BADGE_LABELS[key]}
                               value={s[key]}
                               highlight={isMin}
                               delta={delta}
