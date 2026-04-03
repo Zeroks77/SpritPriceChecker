@@ -35,8 +35,10 @@ function HistoryLineChart({ history, fuelKeys }) {
   const chartData = history
     .filter((entry) => fuelKeys.some((key) => entry[key] != null))
     .slice(-30);
-  const startLabel = chartData[0] ? formatHistoryLabel(chartData[0].t) : '';
-  const endLabel = chartData.at(-1) ? formatHistoryLabel(chartData.at(-1).t) : '';
+  const firstPoint = chartData[0];
+  const lastPoint = chartData[chartData.length - 1];
+  const startLabel = firstPoint ? formatHistoryLabel(firstPoint.t) : '';
+  const endLabel = lastPoint ? formatHistoryLabel(lastPoint.t) : '';
 
   if (chartData.length < 2) {
     return (
@@ -75,7 +77,7 @@ function HistoryLineChart({ history, fuelKeys }) {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-3">
-      <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400 mb-2">
+      <div className="mb-2 flex items-center justify-between gap-2 text-[11px] text-gray-400">
         <span>{formatPrice(maxPrice)}</span>
         <span>{chartData.length} Messpunkte</span>
       </div>
