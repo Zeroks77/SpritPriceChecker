@@ -56,9 +56,16 @@ export default function App() {
   const handleSelectStation = useCallback((station) => {
     setSelectedStation(station);
     setSelectedCharger(null);
-    setDestination({ lat: station.lat, lng: station.lng, name: station.brand || station.name });
-    setRouteData(null);
-    setSelectedRouteIndex(0);
+    if (station) {
+      setDestination({ lat: station.lat, lng: station.lng, name: station.brand || station.name });
+      setRouteData(null);
+      setSelectedRouteIndex(0);
+      setActiveTab('stations');
+      setMobilePanelOpen(true);
+    }
+  }, []);
+
+  const handleSwitchToRouteTab = useCallback(() => {
     setActiveTab('route');
     setMobilePanelOpen(true);
   }, []);
@@ -148,15 +155,14 @@ export default function App() {
         {/* ── Sidebar (desktop) / Bottom sheet (mobile) ── */}
         <aside
           aria-label="Navigation und Inhalt"
-          style={{ bottom: 'var(--tab-bar-total)' }}
           className={[
             // Mobile: fixed bottom sheet positioned above tab bar (incl. iOS safe area)
             'fixed left-0 right-0 z-20 bg-white flex flex-col rounded-t-2xl shadow-2xl',
-            'max-h-[70vh] transition-transform duration-300 ease-out',
+            'bottom-[var(--tab-bar-total)] h-[70vh] transition-transform duration-300 ease-out',
             mobilePanelOpen ? 'translate-y-0' : 'translate-y-full',
-            // Desktop: regular inline sidebar — bottom style irrelevant once position:relative
+            // Desktop: regular inline sidebar — override mobile-specific values
             'md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto',
-            'md:w-80 md:max-h-none md:rounded-none md:shadow-sm',
+            'md:w-80 md:h-auto md:max-h-none md:rounded-none md:shadow-sm',
             'md:border-r md:border-gray-200 md:translate-y-0 md:transition-none',
           ].join(' ')}
         >
@@ -274,6 +280,7 @@ export default function App() {
                         fuelStations={fuelStations}
                         onStationsChange={setFuelStations}
                         onSelectStation={handleSelectStation}
+                        onPlanRoute={handleSwitchToRouteTab}
                         selectedStation={selectedStation}
                       />
                     ) : (
@@ -308,8 +315,7 @@ export default function App() {
         <main
           id="main-map"
           aria-label="Interaktive Karte"
-          className="flex-1 relative md:pb-0"
-          style={{ paddingBottom: 'var(--tab-bar-total)' }}
+          className="flex-1 relative pb-[var(--tab-bar-total)] md:pb-0"
         >
           <MapView
             position={position}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchFuelStations } from '../utils/api';
 import { formatPriceDelta } from '../utils/format';
+import { saveStationPrices } from '../utils/priceHistory';
+import StationDetail from './StationDetail';
 
 // Short badge labels (fit in compact price badge); long labels for status bar / aria
 const FUEL_LABELS = { e5: 'Super E5', e10: 'Super E10', diesel: 'Diesel', all: 'Alle' };
@@ -35,12 +37,13 @@ function PriceBadge({ label, value, highlight, delta }) {
   );
 }
 
-export default function FuelStations({ position, settings, fuelStations, onStationsChange, onSelectStation, selectedStation }) {
+export default function FuelStations({ position, settings, fuelStations, onStationsChange, onSelectStation, onPlanRoute, selectedStation }) {
   const stations = fuelStations || [];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('dist'); // 'dist' | 'price'
   const [openOnly, setOpenOnly] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
 
   const load = useCallback(async () => {
     if (!position) return;
@@ -59,6 +62,10 @@ export default function FuelStations({ position, settings, fuelStations, onStati
         settings.fuelType
       );
       if (onStationsChange) onStationsChange(data);
+      // Persist price snapshots for historical analysis
+      for (const s of data) {
+        saveStationPrices(s.id, s.e5, s.e10, s.diesel);
+      }
     } catch (err) {
       setError(err.message || 'Fehler beim Laden der Tankstellen.');
     } finally {
@@ -69,6 +76,11 @@ export default function FuelStations({ position, settings, fuelStations, onStati
   useEffect(() => {
     load();
   }, [load]);
+
+  // When the parent clears selectedStation, also close the detail view
+  useEffect(() => {
+    if (!selectedStation) setShowDetail(false);
+  }, [selectedStation]);
 
   const showAll = settings.fuelType === 'all';
   const priceKey = showAll ? 'e5' : settings.fuelType;
@@ -102,8 +114,26 @@ export default function FuelStations({ position, settings, fuelStations, onStati
     return result;
   }, [fuelStations, showAll, priceKey]);
 
+  const handleCloseDetail = useCallback(() => {
+    setShowDetail(false);
+    onSelectStation(null);
+  }, [onSelectStation]);
+
   return (
     <div className="flex flex-col h-full min-h-0">
+      {/* Station detail overlay */}
+      {showDetail && selectedStation && (
+        <StationDetail
+          station={selectedStation}
+          settings={settings}
+          onClose={handleCloseDetail}
+          onPlanRoute={onPlanRoute}
+        />
+      )}
+
+      {/* List view (hidden when detail is shown) */}
+      {!showDetail && (
+        <>
       {/* Status bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 shrink-0">
         <span aria-live="polite" aria-atomic="true" className="text-xs text-gray-500 truncate mr-2">
@@ -191,7 +221,7 @@ export default function FuelStations({ position, settings, fuelStations, onStati
           return (
             <li key={s.id}>
               <button
-                onClick={() => onSelectStation(s)}
+                onClick={() => { onSelectStation(s); setShowDetail(true); }}
                 aria-current={isSelected ? 'true' : undefined}
                 aria-label={`${s.brand || s.name}, ${s.dist?.toFixed(1)} km entfernt, ${s.isOpen ? 'Geöffnet' : 'Geschlossen'}`}
                 className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-l-4 ${
@@ -261,6 +291,8 @@ export default function FuelStations({ position, settings, fuelStations, onStati
           );
         })}
       </ul>
+        </>
+      )}
     </div>
   );
 }
