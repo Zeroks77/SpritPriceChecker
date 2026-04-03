@@ -46,8 +46,7 @@ export async function fetchEVChargers(lat, lng, apiKey, radius = 5) {
 
 /**
  * Fetch a route between two coordinates using OpenRouteService.
- * For driving-car: requests up to 3 alternative routes and activates
- * time-dependent routing (historical OSM traffic speeds) via departure_time.
+ * For driving-car: requests up to 3 alternative routes.
  * @param {[number,number]} from - [lng, lat]
  * @param {[number,number]} to - [lng, lat]
  * @param {string} apiKey
@@ -57,8 +56,6 @@ export async function fetchRoute(from, to, apiKey, profile = 'driving-car') {
   const isDriving = profile === 'driving-car';
   const body = {
     coordinates: [from, to],
-    // Time-dependent routing uses historical OSM speed profiles for realistic ETAs
-    ...(isDriving && { departure_time: Math.floor(Date.now() / 1000) }),
     // Request up to 3 alternative routes for car routing
     ...(isDriving && {
       alternative_routes: {
