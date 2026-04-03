@@ -107,11 +107,11 @@ export default function Settings({ onClose }) {
               type="range"
               name="radius"
               min={1}
-              max={25}
+              max={60}
               value={form.radius}
               onChange={handleChange}
               aria-valuemin={1}
-              aria-valuemax={25}
+              aria-valuemax={60}
               aria-valuenow={form.radius}
               aria-valuetext={`${form.radius} Kilometer`}
               className="accent-blue-500"

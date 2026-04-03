@@ -44,18 +44,18 @@ export default function EVChargers({ position, settings, evChargers, onChargersC
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-        <span aria-live="polite" aria-atomic="true" className="text-sm text-gray-500">
+        <span aria-live="polite" aria-atomic="true" className="text-xs text-gray-500 truncate mr-2">
           {position
             ? loading
               ? 'Lädt Ladesäulen…'
-              : `${chargers.length} Ladesäulen (${settings.radius} km)`
+              : `${chargers.length} Ladesäulen · ${settings.radius} km`
             : 'Kein Standort gewählt'}
         </span>
         <button
           onClick={load}
           disabled={loading || !position}
           aria-label="Ladesäulen neu laden"
-          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40 font-medium py-1 px-1"
+          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40 font-medium py-1 px-2 shrink-0"
         >
           {loading ? 'Lädt…' : 'Aktualisieren'}
         </button>
@@ -71,7 +71,7 @@ export default function EVChargers({ position, settings, evChargers, onChargersC
         <p className="px-4 pt-4 text-sm text-gray-400">Keine Ladesäulen gefunden.</p>
       )}
 
-      <ul aria-label="Ladesäulen in der Nähe" className="flex-1 overflow-y-auto divide-y divide-gray-100">
+      <ul aria-label="Ladesäulen in der Nähe" className="flex-1 overflow-y-auto divide-y divide-gray-100 scroll-touch">
         {chargers.map((c) => {
           const totalConnections = c.Connections?.reduce(
             (sum, conn) => sum + (conn.Quantity || 1),
