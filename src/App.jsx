@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import './App.css';
 import MapView from './components/MapView';
 import FuelStations from './components/FuelStations';
@@ -6,6 +6,7 @@ import EVChargers from './components/EVChargers';
 import RoutingControl from './components/RoutingControl';
 import Settings from './components/Settings';
 import LocationSearch from './components/LocationSearch';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { loadSettings } from './utils/settings';
 
@@ -28,6 +29,11 @@ export default function App() {
   const [destination, setDestination] = useState(null);
   const [routeData, setRouteData] = useState(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [focusStation, setFocusStation] = useState(null);
+
+  // Swipe-to-close state for mobile bottom sheet
+  const SWIPE_DOWN_THRESHOLD = 60;
+  const swipeRef = useRef({ startY: 0, currentY: 0, swiping: false });
 
   // Red badge on settings tab when any API key is missing
   const missingKeys = !settings.tankerkoenigKey || !settings.openChargeMapKey || !settings.orsKey;
@@ -93,6 +99,28 @@ export default function App() {
     }
   }
 
+  // Swipe-to-close handlers for mobile bottom sheet drag handle
+  function handleSwipeStart(e) {
+    const touch = e.touches[0];
+    swipeRef.current = { startY: touch.clientY, currentY: touch.clientY, swiping: true };
+  }
+  function handleSwipeMove(e) {
+    if (!swipeRef.current.swiping) return;
+    swipeRef.current.currentY = e.touches[0].clientY;
+  }
+  function handleSwipeEnd() {
+    if (!swipeRef.current.swiping) return;
+    const delta = swipeRef.current.currentY - swipeRef.current.startY;
+    if (delta > SWIPE_DOWN_THRESHOLD) {
+      setMobilePanelOpen(false);
+    }
+    swipeRef.current.swiping = false;
+  }
+
+  const handleFocusStation = useCallback((station) => {
+    setFocusStation({ lat: station.lat, lng: station.lng });
+  }, []);
+
   return (
     <div className="flex flex-col h-dvh bg-gray-50">
       {/* Skip to main content */}
@@ -122,6 +150,7 @@ export default function App() {
               ? <span aria-hidden="true" className="animate-spin text-xs">⟳</span>
               : <span aria-hidden="true">📍</span>
             }
+            <span className="text-xs">GPS</span>
           </button>
         </div>
 
@@ -162,12 +191,17 @@ export default function App() {
             mobilePanelOpen ? 'translate-y-0' : 'translate-y-full',
             // Desktop: regular inline sidebar — override mobile-specific values
             'md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto',
-            'md:w-80 md:h-auto md:max-h-none md:rounded-none md:shadow-sm',
+            'md:w-96 md:h-auto md:max-h-none md:rounded-none md:shadow-sm',
             'md:border-r md:border-gray-200 md:translate-y-0 md:transition-none',
           ].join(' ')}
         >
           {/* Drag handle + close button (mobile only) */}
-          <div className="md:hidden flex items-center px-4 pt-3 pb-1 shrink-0">
+          <div
+            className="md:hidden flex items-center px-4 pt-3 pb-1 shrink-0 cursor-grab"
+            onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
+            onTouchEnd={handleSwipeEnd}
+          >
             <div className="flex-1 flex justify-center">
               <div className="w-10 h-1 bg-gray-300 rounded-full" aria-hidden="true" />
             </div>
@@ -218,6 +252,7 @@ export default function App() {
             aria-labelledby={`tab-${activeTab}`}
             className="flex-1 overflow-hidden flex flex-col min-h-0"
           >
+            <ErrorBoundary label="Fehler im Seitenbereich">
             {activeTab === 'settings' ? (
               <Settings onClose={handleSettingsClose} />
             ) : !position ? (
@@ -281,6 +316,7 @@ export default function App() {
                         onStationsChange={setFuelStations}
                         onSelectStation={handleSelectStation}
                         onPlanRoute={handleSwitchToRouteTab}
+                        onFocusStation={handleFocusStation}
                         selectedStation={selectedStation}
                       />
                     ) : (
@@ -308,6 +344,7 @@ export default function App() {
                 )}
               </>
             )}
+            </ErrorBoundary>
           </div>
         </aside>
 
@@ -315,20 +352,23 @@ export default function App() {
         <main
           id="main-map"
           aria-label="Interaktive Karte"
-          className="flex-1 relative pb-[var(--tab-bar-total)] md:pb-0"
+          className="flex-1 relative z-0 pb-[var(--tab-bar-total)] md:pb-0"
         >
-          <MapView
-            position={position}
-            fuelStations={fuelStations}
-            evChargers={evChargers}
-            routeData={routeData}
-            selectedRouteIndex={selectedRouteIndex}
-            onSelectRoute={setSelectedRouteIndex}
-            onSelectStation={handleSelectStation}
-            onSelectCharger={handleSelectCharger}
-            selectedStation={selectedStation}
-            selectedCharger={selectedCharger}
-          />
+          <ErrorBoundary label="Fehler beim Laden der Karte">
+            <MapView
+              position={position}
+              fuelStations={fuelStations}
+              evChargers={evChargers}
+              routeData={routeData}
+              selectedRouteIndex={selectedRouteIndex}
+              onSelectRoute={setSelectedRouteIndex}
+              onSelectStation={handleSelectStation}
+              onSelectCharger={handleSelectCharger}
+              selectedStation={selectedStation}
+              selectedCharger={selectedCharger}
+              focusStation={focusStation}
+            />
+          </ErrorBoundary>
 
           {/* FAB: visible on mobile when panel is closed and a location is set */}
           {!mobilePanelOpen && position && (
