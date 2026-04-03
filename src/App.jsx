@@ -31,6 +31,7 @@ export default function App() {
   const [focusStation, setFocusStation] = useState(null);
 
   // Swipe-to-close state for mobile bottom sheet
+  const SWIPE_DOWN_THRESHOLD = 60;
   const swipeRef = useRef({ startY: 0, currentY: 0, swiping: false });
 
   // Red badge on settings tab when any API key is missing
@@ -109,7 +110,7 @@ export default function App() {
   function handleSwipeEnd() {
     if (!swipeRef.current.swiping) return;
     const delta = swipeRef.current.currentY - swipeRef.current.startY;
-    if (delta > 60) {
+    if (delta > SWIPE_DOWN_THRESHOLD) {
       setMobilePanelOpen(false);
     }
     swipeRef.current.swiping = false;
